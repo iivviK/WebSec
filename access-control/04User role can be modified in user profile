@@ -1,0 +1,145 @@
+LAB: User role can be modified in user profile  
+Kategoria: Access Control / Mass Assignment  
+Utworzono: 2026-01-24 11:42
+
+---
+
+1. CEL TESTU
+
+   Celem testu było sprawdzenie, czy aplikacja poprawnie egzekwuje kontrolę dostępu
+   podczas aktualizacji danych profilu użytkownika oraz czy możliwa jest eskalacja
+   uprawnień poprzez manipulację danymi przesyłanymi w requestach HTTP.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa typu e-commerce
+   - Użytkownik standardowy: wiener:peter
+   - Funkcjonalność profilu dostępna pod /my-account
+   - Panel administracyjny dostępny pod /admin
+
+---
+
+3. RECONNAISSANCE (UI)
+
+   3.1. Po zalogowaniu użytkownik widzi jedynie:
+        - nazwę użytkownika
+        - aktualny adres email
+        - formularz zmiany emaila
+
+   3.2. UI nie udostępnia żadnych pól związanych z:
+        - rolą użytkownika
+        - uprawnieniami
+        - statusem administratora
+
+---
+
+4. ANALIZA FUNKCJI BIZNESOWEJ
+
+   Funkcja /my-account/change-email powinna:
+   - umożliwiać zmianę wyłącznie adresu email
+   - nie pozwalać na modyfikację innych atrybutów użytkownika
+
+---
+
+5. DISCOVERY – ANALIZA REQUESTU
+
+   Endpoint:
+   - POST /my-account/change-email
+
+   Content-Type:
+   - text/plain;charset=UTF-8
+
+   Body requestu:
+   {
+     "email": "test@test.com"
+   }
+
+---
+
+6. ANALIZA RESPONSE (KLUCZOWA OBSERWACJA)
+
+   Backend zwraca pełny obiekt użytkownika w odpowiedzi JSON:
+
+   {
+     "username": "wiener",
+     "email": "test@test.com",
+     "apikey": "...",
+     "roleid": 1
+   }
+
+   Wniosek:
+   - backend ujawnia wewnętrzny model użytkownika
+   - pole `roleid` kontroluje poziom uprawnień
+
+---
+
+7. IDENTYFIKACJA PODATNOŚCI
+
+   - Pole `roleid` nie jest ograniczone po stronie backendu
+   - Backend akceptuje dane, których frontend nigdy nie wysyła
+   - Brak walidacji dozwolonych pól (allowlist)
+
+   Klasa podatności:
+   - Mass Assignment / Over-posting
+
+---
+
+8. HIPOTEZA
+
+   Jeżeli do requestu aktualizacji profilu zostanie dodane pole `roleid`
+   z wyższą wartością, backend zapisze je w profilu użytkownika,
+   prowadząc do eskalacji uprawnień.
+
+---
+
+9. EKSPLOATACJA
+
+   Zmodyfikowany body requestu:
+
+   {
+     "email": "test@test.com",
+     "roleid": 2
+   }
+
+   Obserwacja:
+   - request przyjęty poprawnie
+   - brak błędu walidacji po stronie serwera
+
+---
+
+10. WALIDACJA SESJI
+
+   - Zmiana roli nie aktualizuje aktywnej sesji
+   - Konieczne było:
+     - wylogowanie (/logout)
+     - ponowne zalogowanie (wiener:peter)
+
+   Po reloginie:
+   - dostęp do /admin został przyznany
+
+---
+
+11. IMPACT
+
+   - Eskalacja uprawnień z użytkownika standardowego do administratora
+   - Dostęp do panelu administracyjnego
+   - Możliwość usuwania użytkowników (np. carlos)
+   - Pełne złamanie mechanizmu kontroli dostępu
+
+---
+
+12. WNIOSKI I REKOMENDACJE
+
+   12.1. Backend powinien:
+         - stosować allowlistę pól możliwych do aktualizacji
+         - nie zwracać pełnych obiektów użytkownika w response
+
+   12.2. Kontrola dostępu:
+         - musi być egzekwowana wyłącznie po stronie backendu
+         - nie może opierać się na danych kontrolowanych przez klienta
+
+   12.3. Metodologicznie:
+         - zawsze analizować response pod kątem ujawnienia modelu danych
+         - po zmianie uprawnień testować zachowanie nowej sesji (relogin)
