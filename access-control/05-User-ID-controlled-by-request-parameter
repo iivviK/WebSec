@@ -1,0 +1,123 @@
+LAB: User ID controlled by request parameter  
+Kategoria: Access Control / IDOR  
+Utworzono: 2026-01-24 19:27 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Celem testu było sprawdzenie, czy aplikacja poprawnie egzekwuje
+   kontrolę dostępu do zasobów użytkownika oraz czy parametr identyfikujący
+   użytkownika w URL jest weryfikowany względem aktualnej sesji.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa typu e-commerce
+   - Użytkownik testowy: wiener:peter
+   - Profil użytkownika dostępny pod endpointem /my-account
+
+---
+
+3. RECONNAISSANCE (UI)
+
+   3.1. Po zalogowaniu użytkownik ma dostęp do strony „My account”.
+
+   3.2. Adres URL profilu zawiera parametr:
+        /my-account?id=wiener
+
+   3.3. Parametr `id` jednoznacznie identyfikuje użytkownika,
+        którego dane są zwracane przez backend.
+
+---
+
+4. ANALIZA LOGIKI BIZNESOWEJ
+
+   Profil użytkownika powinien:
+   - być dostępny wyłącznie dla właściciela konta
+   - nie pozwalać na dostęp do danych innych użytkowników
+   - ignorować manipulacje identyfikatorem po stronie klienta
+
+---
+
+5. IDENTYFIKACJA POTENCJALNEJ PODATNOŚCI
+
+   Obecność parametru `id` w URL sugeruje:
+   - możliwość bezpośredniego odwołania do obiektu (Direct Object Reference)
+   - potencjalny brak walidacji autoryzacji po stronie backendu
+
+---
+
+6. HIPOTEZA
+
+   Jeżeli backend nie weryfikuje, czy zalogowany użytkownik
+   jest właścicielem obiektu wskazanego przez parametr `id`,
+   możliwy będzie dostęp do danych innego konta.
+
+---
+
+7. TEST (MANUALNY, BEZ BURP)
+
+   Zmieniono parametr w URL:
+
+   /my-account?id=wiener  
+   → /my-account?id=carlos
+
+   Sesja użytkownika pozostała niezmieniona.
+
+---
+
+8. OBSERWACJA
+
+   Backend zwrócił dane użytkownika `carlos`, w tym:
+   - nazwę użytkownika
+   - klucz API (API key)
+
+   Nie wystąpiła żadna walidacja autoryzacji.
+
+---
+
+9. EKSPLOATACJA
+
+   - Nieautoryzowany dostęp do profilu innego użytkownika
+   - Odczyt wrażliwych danych (API key)
+
+   Eksploit wymagał jedynie:
+   - zmiany jednego parametru w URL
+
+---
+
+10. IMPACT
+
+   - Naruszenie poufności danych użytkowników
+   - Możliwość przejęcia konta (Account Takeover)
+   - Potencjalny dostęp do API w imieniu innego użytkownika
+   - Krytyczne złamanie kontroli dostępu (horizontal escalation)
+
+---
+
+11. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: IDOR (Insecure Direct Object Reference)
+   - Kategoria: Broken Access Control
+   - Poziom ryzyka: High / Critical
+
+   Root Cause:
+   - Brak powiązania parametru `id` z aktualną sesją użytkownika
+
+---
+
+12. WNIOSKI I REKOMENDACJE
+
+   12.1. Backend powinien:
+         - ignorować identyfikatory obiektów przekazywane przez klienta
+         - ustalać kontekst użytkownika wyłącznie na podstawie sesji
+
+   12.2. Każdy dostęp do zasobu użytkownika musi:
+         - weryfikować właściciela obiektu
+         - porównywać go z użytkownikiem zalogowanym
+
+   12.3. Metodologicznie:
+         - zawsze testować parametry typu id, user, account
+         - traktować je jako pierwszy wektor testów Access Control
