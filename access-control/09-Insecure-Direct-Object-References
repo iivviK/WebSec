@@ -1,0 +1,128 @@
+LAB: Insecure Direct Object References  
+Kategoria: Access Control / IDOR / File-based Object Reference  
+Utworzono: 2026-01-25 17:00 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Celem testu było sprawdzenie, czy aplikacja poprawnie egzekwuje
+   kontrolę dostępu do zasobów w postaci plików oraz czy użytkownik
+   może uzyskać dostęp do plików należących do innych użytkowników
+   poprzez manipulację bezpośrednim identyfikatorem obiektu.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa z funkcją czatu
+   - Użytkownik testowy: wiener:peter
+   - Dostępna funkcja pobierania transkrypcji czatu
+   - Transkrypcje przechowywane jako pliki tekstowe
+
+---
+
+3. RECONNAISSANCE (UI)
+
+   3.1. Po zalogowaniu użytkownik może wejść w sekcję czatu.
+
+   3.2. Z poziomu UI dostępna jest opcja pobrania transkrypcji rozmowy.
+
+---
+
+4. OBSERWACJA TECHNICZNA
+
+   Podczas pobierania transkrypcji backend zwraca odpowiedź z nagłówkiem:
+
+   Content-Disposition: attachment; filename="2.txt"
+
+   Co sugeruje, że:
+   - obiekt jest plikiem
+   - identyfikatorem obiektu jest nazwa pliku
+   - pliki mogą być numerowane sekwencyjnie
+
+---
+
+5. IDENTYFIKACJA POTENCJALNEJ PODATNOŚCI
+
+   Obecność bezpośredniej referencji do pliku wskazuje na możliwość:
+   - klasycznego IDOR
+   - braku weryfikacji właściciela pliku po stronie backendu
+
+---
+
+6. ANALIZA ENDPOINTU
+
+   Plik był pobierany poprzez endpoint:
+
+   GET /download-transcript/2.txt
+
+   Nazwa pliku była w pełni kontrolowana przez klienta
+   i nie była powiązana z sesją użytkownika.
+
+---
+
+7. TEST – MANIPULACJA IDENTYFIKATOREM OBIEKTU
+
+   Zmieniono nazwę pliku w URL:
+
+   /download-transcript/2.txt  
+   → /download-transcript/1.txt
+
+   Backend zwrócił inny plik transkrypcji.
+
+---
+
+8. OBSERWACJA – WYCIĘK DANYCH
+
+   Pobrany plik (1.txt) należał do innego użytkownika
+   i zawierał wrażliwe informacje, w tym hasło użytkownika carlos
+   zapisane w treści rozmowy.
+
+---
+
+9. EKSPLOATACJA
+
+   - Uzyskano dostęp do transkrypcji czatu innego użytkownika
+   - Wyciek danych nastąpił bez:
+     - zmiany sesji
+     - eskalacji uprawnień
+     - jakiejkolwiek autoryzacji backendowej
+
+---
+
+10. IMPACT
+
+   - Ujawnienie wrażliwych danych użytkowników
+   - Możliwość przejęcia konta (Account Takeover)
+   - Złamanie poufności i integralności danych
+   - Wysokie ryzyko w środowisku produkcyjnym
+
+---
+
+11. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: IDOR (Insecure Direct Object Reference)
+   - Wariant: File-based IDOR
+   - Kategoria: Broken Access Control
+   - Poziom ryzyka: High / Critical
+
+   Root Cause:
+   - Brak weryfikacji właściciela pliku
+   - Bezpośrednie mapowanie URL → plik
+
+---
+
+12. WNIOSKI I REKOMENDACJE
+
+   12.1. Backend powinien:
+         - weryfikować właściciela pliku na podstawie sesji
+         - mapować zasoby do użytkowników po stronie serwera
+
+   12.2. Nie należy:
+         - polegać na nazwach plików jako mechanizmie kontroli dostępu
+         - udostępniać sekwencyjnych identyfikatorów obiektów
+
+   12.3. Metodologicznie:
+         - zawsze analizować nagłówek Content-Disposition
+         - traktować nazwy plików jako potencjalne IDOR
