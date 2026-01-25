@@ -1,0 +1,128 @@
+LAB: User ID controlled by request parameter with data leakage in redirect  
+Kategoria: Access Control / IDOR / Information Disclosure  
+Utworzono: 2026-01-25 11:36 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Celem testu było sprawdzenie, czy aplikacja poprawnie chroni dane
+   użytkowników w sytuacji, gdy dostęp do zasobu jest formalnie blokowany,
+   ale dane są nadal zwracane w odpowiedzi HTTP typu redirect (3xx).
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa typu e-commerce
+   - Użytkownik testowy: wiener:peter
+   - Profil użytkownika dostępny pod /my-account?id=<username>
+   - Dane wrażliwe: API key użytkownika
+
+---
+
+3. RECONNAISSANCE (UI)
+
+   3.1. Po zalogowaniu użytkownik trafia na:
+        /my-account?id=wiener
+
+   3.2. Parametr `id` w URL identyfikuje użytkownika
+        na podstawie jego nazwy (username).
+
+---
+
+4. ANALIZA LOGIKI BIZNESOWEJ
+
+   Backend:
+   - identyfikuje użytkownika na podstawie parametru `id`
+   - próbuje blokować nieautoryzowany dostęp przez redirect
+   - NIE blokuje generowania danych przed wykonaniem redirectu
+
+---
+
+5. HIPOTEZA
+
+   Jeżeli backend generuje dane użytkownika przed wykonaniem redirectu,
+   możliwy będzie wyciek wrażliwych informacji w body odpowiedzi HTTP,
+   mimo formalnego braku dostępu.
+
+---
+
+6. TEST (MANUALNY)
+
+   Zmieniono parametr w URL:
+
+   /my-account?id=wiener  
+   → /my-account?id=carlos
+
+   W przeglądarce nastąpił redirect (brak widocznych danych).
+
+---
+
+7. ANALIZA RESPONSE (KLUCZOWY ETAP)
+
+   W Burp Suite przeanalizowano surową odpowiedź HTTP:
+
+   - Status code: 302 Found
+   - Obecny nagłówek Location
+   - BODY response zawierało dane użytkownika carlos
+
+---
+
+8. OBSERWACJA – WYCIĘK DANYCH
+
+   W body odpowiedzi 302 ujawniono:
+   - nazwę użytkownika carlos
+   - klucz API (API key)
+
+   Dane te nie były widoczne w przeglądarce,
+   lecz były dostępne w surowej odpowiedzi HTTP.
+
+---
+
+9. EKSPLOATACJA
+
+   - Uzyskano API key użytkownika carlos
+   - Eksploit nie wymagał:
+     - obejścia redirectu
+     - modyfikacji sesji
+     - dostępu do panelu admina
+
+   Wystarczyła analiza response w Burp Suite.
+
+---
+
+10. IMPACT
+
+   - Ujawnienie wrażliwych danych użytkowników
+   - Możliwość przejęcia konta (Account Takeover)
+   - Złamanie kontroli dostępu mimo pozornego zabezpieczenia
+   - Wysokie ryzyko nadużyć API
+
+---
+
+11. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: IDOR (Insecure Direct Object Reference)
+   - Dodatkowo: Information Disclosure
+   - Kategoria: Broken Access Control
+   - Poziom ryzyka: High / Critical
+
+   Root Cause:
+   - Generowanie danych przed weryfikacją autoryzacji
+   - Poleganie na redirectach jako mechanizmie bezpieczeństwa
+
+---
+
+12. WNIOSKI I REKOMENDACJE
+
+   12.1. Redirect NIE jest mechanizmem bezpieczeństwa.
+
+   12.2. Backend powinien:
+         - najpierw weryfikować autoryzację
+         - dopiero potem generować dane odpowiedzi
+
+   12.3. Metodologicznie:
+         - zawsze analizować body odpowiedzi 3xx
+         - nie ufać temu, co „widać” w przeglądarce
+         - używać narzędzi pokazujących surowe odpowiedzi HTTP
