@@ -1,0 +1,148 @@
+LAB: URL-based access control can be circumvented  
+Kategoria: Access Control / URL-based Access Control / Reverse Proxy Bypass  
+Utworzono: 2026-01-25 18:04 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Sprawdzenie, czy kontrola dostępu oparta na URL-ach może zostać
+   ominięta w sytuacji, gdy aplikacja korzysta z front-endu (reverse proxy),
+   który inaczej interpretuje URL niż backend aplikacyjny.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa z panelem administracyjnym
+   - Endpoint /admin istnieje, ale dostęp jest blokowany
+   - Brak potrzeby logowania jako zwykły użytkownik
+   - Odpowiedzi typu „Access denied” są bardzo proste (brak HTML)
+
+---
+
+3. OBSERWACJA POCZĄTKOWA
+
+   Wejście na endpoint:
+
+   /admin
+
+   Rezultat:
+   - HTTP 403 Forbidden
+   - Response typu JSON / plain text
+   - Brak layoutu aplikacji
+
+   Wniosek:
+   - Blokada najprawdopodobniej pochodzi z front-endu (proxy),
+     a nie z logiki aplikacyjnej.
+
+---
+
+4. HIPOTEZA
+
+   Aplikacja działa w architekturze:
+   - Front-end / reverse proxy sprawdza URL z request line
+   - Backend interpretuje URL na podstawie nagłówka HTTP
+
+   Możliwy brak spójności w parsowaniu URL.
+
+---
+
+5. TEST ZAUFANIA DO NAGŁÓWKA (PROOF OF CONCEPT)
+
+   Wysłano request:
+
+   GET /
+   X-Original-URL: /invalid
+
+   Rezultat:
+   - Backend zwrócił 404 Not Found
+
+   Wniosek:
+   - Backend interpretuje ścieżkę na podstawie nagłówka X-Original-URL
+   - Nagłówek nadpisuje rzeczywistą ścieżkę żądania
+
+---
+
+6. OBEJŚCIE KONTROLI DOSTĘPU (BYPASS)
+
+   Wysłano request:
+
+   GET /
+   X-Original-URL: /admin
+
+   Rezultat:
+   - Uzyskano dostęp do panelu administracyjnego
+
+   Wniosek:
+   - Front-end widzi dozwolony URL (/)
+   - Backend wykonuje logikę dla /admin
+
+---
+
+7. EKSPLOATACJA – WYKONANIE AKCJI ADMINA
+
+   Celem było usunięcie użytkownika carlos.
+
+   Wysłano request:
+
+   POST /?username=carlos
+   X-Original-URL: /admin/delete
+
+   Rozdzielenie odpowiedzialności:
+   - Request line (/) → sprawdzany przez front-end
+   - X-Original-URL (/admin/delete) → używany przez backend
+   - Query string (username=carlos) → parametr funkcji
+
+---
+
+8. ZACHOWANIE APLIKACJI
+
+   - Backend wykonał akcję usunięcia użytkownika
+   - Nastąpił redirect do /admin
+   - Po redirect: Access denied
+
+   Uwaga:
+   - Redirect NIE oznacza cofnięcia akcji
+   - Operacja została wykonana przed odpowiedzią
+
+---
+
+9. IMPACT
+
+   - Nieautoryzowany użytkownik może:
+     - wykonywać akcje administracyjne
+     - usuwać konta
+     - potencjalnie modyfikować dane systemowe
+
+   Poziom ryzyka: High / Critical
+
+---
+
+10. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: Broken Access Control
+   - Wariant: URL-based Access Control Bypass
+   - Technika: Header-based routing override
+   - CWE: CWE-284 (Improper Access Control)
+
+---
+
+11. ROOT CAUSE
+
+   - Brak spójności w interpretacji URL:
+     - front-end sprawdza request line
+     - backend ufa nagłówkowi X-Original-URL
+   - Brak walidacji nagłówków nadpisujących routing
+
+---
+
+12. WNIOSKI METODOLOGICZNE
+
+   - Proste odpowiedzi 403/Access denied mogą pochodzić z proxy
+   - Zawsze testować nagłówki:
+     - X-Original-URL
+     - X-Rewrite-URL
+     - X-Forwarded-Path
+   - Panel admina ≠ akcje administracyjne
+   - UI nie jest źródłem prawdy – backend wykonuje akcje przed redirectem
