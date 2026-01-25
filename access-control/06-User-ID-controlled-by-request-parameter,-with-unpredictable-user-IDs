@@ -1,0 +1,131 @@
+LAB: User ID controlled by request parameter, with unpredictable user IDs  
+Kategoria: Access Control / IDOR  
+Utworzono: 2026-01-25 10:42 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Celem testu było sprawdzenie, czy zastosowanie nieprzewidywalnych
+   identyfikatorów użytkowników (UUID) skutecznie chroni przed IDOR
+   oraz czy backend weryfikuje autoryzację dostępu do zasobów użytkowników.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja webowa typu blog / e-commerce
+   - Użytkownik testowy: wiener:peter
+   - Profil użytkownika dostępny pod /my-account?id=<UUID>
+   - Panel administracyjny dostępny po uzyskaniu kontekstu admina
+
+---
+
+3. RECONNAISSANCE (UI)
+
+   3.1. Po zalogowaniu użytkownik trafia na:
+        /my-account?id=<losowy_UUID>
+
+   3.2. Identyfikator użytkownika:
+        - nie jest nazwą użytkownika
+        - ma postać UUID
+        - nie jest możliwy do zgadnięcia metodą brute-force
+
+---
+
+4. ANALIZA LOGIKI BIZNESOWEJ
+
+   Backend:
+   - identyfikuje użytkownika na podstawie parametru `id`
+   - zakłada, że UUID jest tajny
+   - nie weryfikuje, czy żądany zasób należy do zalogowanego użytkownika
+
+---
+
+5. HIPOTEZA
+
+   Jeżeli aplikacja gdziekolwiek ujawnia UUID innych użytkowników,
+   a backend ufa parametrowi `id`, możliwy będzie IDOR
+   mimo zastosowania nieprzewidywalnych identyfikatorów.
+
+---
+
+6. DISCOVERY – WYCIEK IDENTYFIKATORÓW
+
+   6.1. Podczas przeglądania wpisów na blogu zauważono:
+        - nazwę autora wpisu
+        - link prowadzący do profilu autora
+
+   6.2. Jeden z wpisów został opublikowany przez administratora.
+
+   6.3. Wejście w profil autora ujawniło UUID administratora.
+
+---
+
+7. EKSPLOATACJA – PRZEJĘCIE KONTEKSTU ADMINA
+
+   Zmieniono parametr w URL:
+
+   /my-account?id=<UUID_wiener>
+   → /my-account?id=<UUID_admin>
+
+   Efekt:
+   - dostęp do profilu administratora
+   - uzyskanie dostępu do panelu administracyjnego
+
+---
+
+8. WAŻNA OBSERWACJA (BŁĄD LOGICZNY)
+
+   Sam dostęp do konta administratora NIE rozwiązuje laba.
+
+   Cel zadania wymaga:
+   - wykonania akcji dotyczącej użytkownika `carlos`
+   - użycia klucza API przypisanego do konta carlos
+
+---
+
+9. FINALNA EKSPLOATACJA
+
+   - Zidentyfikowano konto carlos
+   - Uzyskano API key użytkownika carlos
+   - Klucz API carlos został użyty zgodnie z celem laba
+
+   Dopiero ta akcja spowodowała oznaczenie laba jako „Solved”.
+
+---
+
+10. IMPACT
+
+   - Możliwość przejęcia kontekstu dowolnego użytkownika
+   - Eskalacja do konta administratora
+   - Dostęp do wrażliwych danych (UUID, API keys)
+   - Pełne złamanie kontroli dostępu (horizontal + vertical)
+
+---
+
+11. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: IDOR (Insecure Direct Object Reference)
+   - Kategoria: Broken Access Control
+   - Poziom ryzyka: High / Critical
+
+   Root Cause:
+   - Zaufanie do nieprzewidywalnych identyfikatorów
+   - Brak weryfikacji właściciela zasobu po stronie backendu
+
+---
+
+12. WNIOSKI I REKOMENDACJE
+
+   12.1. Nieprzewidywalne ID:
+         - NIE są mechanizmem bezpieczeństwa
+         - nie zastępują autoryzacji
+
+   12.2. Backend powinien:
+         - zawsze weryfikować, czy użytkownik ma prawo do zasobu
+         - nie ufać identyfikatorom przesyłanym przez klienta
+
+   12.3. Metodologicznie:
+         - po zdobyciu admina sprawdzać CEL laba, nie tylko eskalację
+         - zawsze wykonywać akcję dokładnie na wskazanym obiekcie (np. carlos)
