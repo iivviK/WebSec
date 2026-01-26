@@ -1,0 +1,131 @@
+LAB: Referer-based access control  
+Kategoria: Access Control / Header-based Access Control  
+Utworzono: 2026-01-26 18:20 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Sprawdzenie, czy aplikacja wykorzystuje nagłówek HTTP Referer
+   jako mechanizm kontroli dostępu do funkcji administracyjnych.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja posiada panel administracyjny
+   - Istnieje funkcjonalność zarządzania rolami użytkowników
+   - Zwykły użytkownik nie powinien móc wykonywać akcji admina
+
+---
+
+3. OBSERWACJA POCZĄTKOWA
+
+   Dostęp do panelu /admin:
+   - poprawnie zablokowany dla zwykłego użytkownika
+   - dostępny wyłącznie dla administratora
+
+   Wniosek:
+   - Atak nie będzie polegał na wejściu do panelu admina,
+     lecz na bezpośrednim wywołaniu akcji administracyjnej
+
+---
+
+4. ADMIN JAKO WZORZEC ZACHOWANIA
+
+   Zalogowano się jako administrator i wykonano akcję
+   zmiany roli użytkownika.
+
+   Przechwycony request:
+
+   GET /admin-roles?username=carlos&action=upgrade
+
+   W nagłówkach obecny był:
+
+   Referer: https://<LAB-ID>.web-security-academy.net/admin
+
+---
+
+5. HIPOTEZA
+
+   Backend może polegać na nagłówku Referer
+   jako dowodzie, że request pochodzi z panelu administracyjnego.
+
+---
+
+6. TEST KONTROLNY (ZŁY UŻYTKOWNIK)
+
+   - Podmieniono cookie sesyjne na użytkownika wiener
+   - Request wysłany bez modyfikacji nagłówka Referer
+
+   Rezultat:
+   - Akcja zablokowana
+   - Brak wykonania operacji
+
+   Wniosek:
+   - Istnieje kontrola dostępu zależna od Referer
+
+---
+
+7. EKSPLOATACJA
+
+   - Zostawiono cookie sesyjne użytkownika wiener
+   - Zachowano nagłówek:
+
+     Referer: https://<LAB-ID>.web-security-academy.net/admin
+
+   - Zmieniono parametr:
+     username=carlos → username=wiener
+
+   Request:
+
+   GET /admin-roles?username=wiener&action=upgrade
+
+---
+
+8. REZULTAT
+
+   - Backend wykonał akcję administracyjną
+   - Konto wiener uzyskało uprawnienia administratora
+   - Lab został oznaczony jako Solved
+
+---
+
+9. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: Broken Access Control
+   - Wariant: Referer-based Access Control
+   - CWE: CWE-284 (Improper Access Control)
+
+---
+
+10. ROOT CAUSE
+
+   - Backend ufa nagłówkowi Referer
+   - Brak rzeczywistej weryfikacji:
+     - sesji użytkownika
+     - roli użytkownika
+   - Referer traktowany jako dowód autoryzacji
+
+---
+
+11. IMPACT
+
+   - Zwykły użytkownik może:
+     - eskalować własne uprawnienia
+     - wykonywać akcje administracyjne
+   - Pełne przejęcie kontroli nad aplikacją
+
+---
+
+12. WNIOSKI METODOLOGICZNE
+
+   - Referer i Origin to dane w pełni kontrolowane przez klienta
+   - Nagłówki HTTP nie są mechanizmem bezpieczeństwa
+   - Każda akcja administracyjna musi:
+     - sprawdzać sesję
+     - sprawdzać rolę użytkownika
+   - Zawsze testuj:
+     - usunięcie Referer
+     - jego ręczne ustawienie
+     - zachowanie backendu bez UI
