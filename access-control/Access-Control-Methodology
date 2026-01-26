@@ -1,0 +1,213 @@
+METODOLOGIA TESTOWANIA ACCESS CONTROL (WEB APPLICATIONS)
+Autor: [Adrian Moskal (Kivvi) – PortSwigger Academy]
+Utworzono: 2026-01-26 18:34 (Europe/Amsterdam)
+
+---
+
+0. ZAŁOŻENIA METODOLOGII
+
+   - Testy prowadzone w trybie BLACK BOX
+   - Brak zaufania do UI i komunikatów aplikacji
+   - Każdy request traktowany jako niezależna jednostka
+   - Access Control = decyzja backendu, nie frontendu
+
+---
+
+1. REKONESANS FUNKCJONALNY (MAPOWANIE APLIKACJI)
+
+   Cel:
+   - zrozumieć, jakie funkcje istnieją
+   - NIE zgadywać podatności
+
+   Sprawdź:
+   - endpointy dostępne z UI
+   - panele użytkownika (/my-account)
+   - panele administracyjne (/admin, /administrator, itp.)
+   - pliki pomocnicze (robots.txt, sitemap, JS)
+
+   Pytania:
+   - Czy UI pokazuje wszystkie funkcje?
+   - Czy coś „istnieje”, ale nie jest widoczne?
+
+---
+
+2. IDENTYFIKACJA OBIEKTÓW I RÓL
+
+   Szukaj:
+   - parametrów typu:
+     id=, user=, username=
+   - identyfikatorów:
+     - jawnych (wiener, carlos)
+     - niejawnych (UUID, hash)
+
+   Sprawdź:
+   - jak backend identyfikuje użytkownika
+   - czy identyfikacja opiera się na:
+     - parametrze
+     - sesji
+     - obu naraz
+
+   Kluczowe pytanie:
+   - czy mogę odwołać się do OBCEGO obiektu?
+
+---
+
+3. TESTY IDOR (HORYZONTALNE)
+
+   Wykonaj:
+   - zmień identyfikator użytkownika
+   - zmień identyfikator zasobu
+   - obserwuj:
+     - dane
+     - API keys
+     - hasła
+     - transkrypcje
+     - redirecty
+
+   Zawsze sprawdzaj:
+   - odpowiedź 200 / 302 / dane w body
+   - dane ujawnione w redirectach
+
+---
+
+4. TESTY IDOR (WERTYKALNE)
+
+   Sprawdź:
+   - czy zwykły użytkownik może:
+     - wykonać akcję admina
+     - zmienić rolę
+     - usunąć konto
+
+   Klucz:
+   - UI ≠ zabezpieczenie
+   - testuj BEZPOŚREDNIO endpoint
+
+---
+
+5. MANIPULACJA PARAMETRAMI LOGICZNYMI
+
+   Szukaj parametrów typu:
+   - role
+   - roleid
+   - admin
+   - isAdmin
+   - confirmed
+   - action
+
+   Testuj:
+   - dodanie parametru
+   - zmianę wartości
+   - przesłanie parametru, którego UI nie wysyła
+
+---
+
+6. SPÓJNOŚĆ TOŻSAMOŚCI (KRYTYCZNE)
+
+   Zawsze sprawdzaj:
+   - czy session cookie
+   - i parametr username / id
+   dotyczą TEJ SAMEJ osoby
+
+   Niespójność:
+   - może blokować exploit
+   - albo prowadzić do innego zachowania backendu
+
+---
+
+7. TESTY METOD HTTP
+
+   Dla KAŻDEJ akcji:
+   - POST → GET
+   - POST → POSTX
+   - POST → PUT / DELETE (jeśli logiczne)
+
+   Obserwuj:
+   - Unauthorized vs Missing parameter vs 302
+
+   Różne odpowiedzi = różne ścieżki kodu
+
+---
+
+8. TESTY PROCESÓW WIELOETAPOWYCH
+
+   Mapuj:
+   - każdy krok procesu
+   - każdy request
+
+   Szukaj:
+   - kroków typu:
+     confirm
+     finalize
+     execute
+
+   Klucz:
+   - czy KAŻDY krok sprawdza uprawnienia?
+
+---
+
+9. TESTY OPARTE NA NAGŁÓWKACH
+
+   Zawsze testuj:
+   - Referer
+   - Origin
+   - X-Original-URL
+   - X-Forwarded-For
+
+   Założenie:
+   - nagłówki = dane od klienta
+   - nigdy mechanizm bezpieczeństwa
+
+---
+
+10. TESTY REDIRECTÓW
+
+   Sprawdź:
+   - czy redirect zawiera dane w body
+   - czy akcja wykonała się PRZED redirectem
+
+   Pamiętaj:
+   - 302 ≠ brak wykonania akcji
+
+---
+
+11. POTWIERDZENIE IMPACTU
+
+   Exploit ma sens tylko, jeśli:
+   - zmienia stan aplikacji
+   - daje realny dostęp
+   - eskaluje uprawnienia
+
+   Zawsze pytaj:
+   - „co realnie zyskał atakujący?”
+
+---
+
+12. KLASYFIKACJA I NAZEWNICTWO
+
+   Dla każdego znalezienia:
+   - Broken Access Control
+   - CWE-284 (Improper Access Control)
+
+   Doprecyzuj:
+   - IDOR
+   - Method-based bypass
+   - Missing access control on step
+   - Header-based access control
+
+---
+
+13. ZASADA ZŁOTA (DO GŁOWY)
+
+   - Backend nie pamięta kontekstu
+   - Każdy request musi być:
+     - uwierzytelniony
+     - autoryzowany
+     - sprawdzony niezależnie
+
+   Jeśli backend ufa:
+   - UI
+   - kolejności kroków
+   - nagłówkom
+   - parametrom logicznym
+
+   → to jest miejsce na podatność
