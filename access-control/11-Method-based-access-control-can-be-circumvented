@@ -1,0 +1,153 @@
+LAB: Method based access control can be circumvented  
+Kategoria: Access Control / Method-based Access Control  
+Utworzono: 2026-01-26 17:23 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Sprawdzenie, czy mechanizmy kontroli dostępu są egzekwowane
+   jednakowo dla wszystkich metod HTTP, czy tylko dla metody
+   „oczekiwanej” przez backend (np. POST).
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja posiada panel administracyjny
+   - Istnieje endpoint odpowiedzialny za zarządzanie rolami użytkowników
+   - Zwykły użytkownik nie powinien mieć możliwości zmiany ról
+
+---
+
+3. OBSERWACJA POCZĄTKOWA
+
+   Endpoint administracyjny:
+
+   /admin
+
+   Rezultat:
+   - Dostęp zablokowany dla zwykłego użytkownika
+   - Panel admina poprawnie chroniony
+
+   Wniosek:
+   - Nie atakujemy panelu, tylko akcję administracyjną
+
+---
+
+4. IDENTYFIKACJA AKCJI ADMINA
+
+   Po zalogowaniu jako administrator wykonano akcję
+   zmiany roli użytkownika (promote / downgrade).
+
+   Zidentyfikowany endpoint:
+
+   /admin-roles
+
+   Metoda:
+   - POST
+
+   Parametry:
+   - username
+   - action
+
+---
+
+5. TEST KONTROLNY (BASELINE)
+
+   Ten sam request wysłany z:
+   - cookie sesji zwykłego użytkownika (wiener)
+
+   Rezultat:
+   - HTTP 401 Unauthorized
+
+   Wniosek:
+   - Kontrola dostępu działa dla metody POST
+
+---
+
+6. TEST METODY NIEOCZEKIWANEJ (SONDA)
+
+   Zmieniono metodę:
+
+   POST → POSTX
+
+   Rezultat:
+   - HTTP 400
+   - Komunikat: "Missing parameter 'username'"
+
+   Wniosek:
+   - Backend nie wykonał kontroli dostępu
+   - Wszedł w ścieżkę parsowania parametrów
+   - ACL jest przypięte wyłącznie do metody POST
+
+---
+
+7. EKSPLOATACJA (BYPASS ACL)
+
+   Zmieniono metodę na:
+
+   GET
+
+   Request:
+
+   GET /admin-roles?username=wiener&action=upgrade
+
+   Cookie:
+   - sesja użytkownika wiener
+
+   Rezultat:
+   - HTTP 302 Found
+   - Redirect do /admin
+
+---
+
+8. KLUCZOWY DETAL LOGICZNY
+
+   Warunkiem zaliczenia laba nie było:
+   - downgrade innego użytkownika (carlos)
+
+   Tylko:
+   - eskalacja uprawnień WŁASNEGO konta
+
+   Spójność:
+   - session = wiener
+   - username = wiener
+
+   Brak tej spójności powodował niezaliczenie zadania.
+
+---
+
+9. ZACHOWANIE APLIKACJI
+
+   - Akcja wykonana przed redirectem
+   - Redirect do /admin jest spodziewany i nie oznacza porażki
+   - UI nie odzwierciedla rzeczywistego efektu po stronie backendu
+
+---
+
+10. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: Broken Access Control
+   - Wariant: Method-based Access Control Bypass
+   - CWE: CWE-284 (Improper Access Control)
+
+---
+
+11. ROOT CAUSE
+
+   - Kontrola dostępu zaimplementowana tylko dla jednej metody HTTP (POST)
+   - Brak walidacji uprawnień dla innych metod (GET)
+   - Różne ścieżki kodu backendu zależne od metody
+
+---
+
+12. WNIOSKI METODOLOGICZNE
+
+   - Zawsze testuj inne metody HTTP niż „oczekiwana”
+     (GET, POSTX, PUT, DELETE)
+   - Różne komunikaty błędów = różne ścieżki kodu
+   - Redirect (302) nie oznacza cofnięcia akcji
+   - Zawsze sprawdzaj spójność:
+     session ↔ username ↔ akcja
+   - Exploit techniczny musi prowadzić do sensownego impactu biznesowego
