@@ -1,0 +1,137 @@
+LAB: Multi-step process with no access control on one step  
+Kategoria: Access Control / Multi-step Access Control  
+Utworzono: 2026-01-26 17:50 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Sprawdzenie, czy kontrola dostępu jest egzekwowana
+   na KAŻDYM etapie wieloetapowego procesu administracyjnego,
+   a nie wyłącznie na jego początku.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - Aplikacja posiada panel administracyjny
+   - Istnieje funkcjonalność zarządzania rolami użytkowników
+   - Operacja zmiany roli realizowana jest jako proces wieloetapowy
+
+---
+
+3. OBSERWACJA POCZĄTKOWA
+
+   Dostęp do panelu administracyjnego:
+   - poprawnie zablokowany dla zwykłego użytkownika
+   - dostępny wyłącznie dla administratora
+
+   Wniosek:
+   - Atak nie będzie polegał na wejściu do panelu,
+     lecz na bezpośrednim wywołaniu jednego z kroków procesu
+
+---
+
+4. MAPOWANIE PROCESU (ADMIN JAKO WZORZEC)
+
+   Wykonano akcję zmiany roli użytkownika jako administrator.
+
+   Zaobserwowane etapy:
+   - wybór użytkownika i akcji (upgrade / downgrade)
+   - krok potwierdzenia operacji
+   - wykonanie akcji po stronie backendu
+
+---
+
+5. IDENTYFIKACJA KRYTYCZNEGO KROKU
+
+   Zidentyfikowany request:
+
+   POST /admin-roles
+
+   Parametry:
+   - username
+   - action
+   - confirmed=true
+
+   Wniosek:
+   - request z parametrem confirmed=true wykonuje REALNĄ akcję
+   - jest to końcowy krok procesu
+
+---
+
+6. HIPOTEZA ATAKU
+
+   Backend zakłada, że:
+   - jeśli request zawiera confirmed=true,
+     to użytkownik przeszedł wcześniejsze etapy
+     i posiada uprawnienia administratora
+
+   Brak:
+   - ponownej weryfikacji roli użytkownika na tym etapie
+
+---
+
+7. TEST JAKO ZWYKŁY UŻYTKOWNIK
+
+   - Podmieniono cookie sesyjne administratora
+     na cookie użytkownika wiener
+   - Zmieniono akcję:
+     downgrade → upgrade
+   - Nie modyfikowano struktury requestu
+
+   Request:
+
+   POST /admin-roles
+   action=upgrade
+   confirmed=true
+   username=wiener
+
+---
+
+8. REZULTAT
+
+   - Backend wykonał akcję
+   - Konto wiener otrzymało uprawnienia administratora
+   - Operacja zakończona sukcesem bez dostępu do panelu admina
+
+---
+
+9. KLASYFIKACJA PODATNOŚCI
+
+   - Typ: Broken Access Control
+   - Wariant: Missing Access Control on Multi-step Process
+   - CWE: CWE-284 (Improper Access Control)
+
+---
+
+10. ROOT CAUSE
+
+   - Kontrola dostępu sprawdzana wyłącznie
+     na pierwszym etapie procesu
+   - Brak autoryzacji na etapie potwierdzenia (final step)
+   - Zaufanie do stanu procesu zamiast do sesji użytkownika
+
+---
+
+11. IMPACT
+
+   - Zwykły użytkownik może:
+     - eskalować własne uprawnienia
+     - wykonać akcje administracyjne
+   - Pełne przejęcie kontroli nad aplikacją
+
+---
+
+12. WNIOSKI METODOLOGICZNE
+
+   - Zawsze mapuj CAŁY proces, nie tylko endpoint
+   - Szukaj kroków typu:
+     - confirm
+     - finalize
+     - execute
+   - Każdy krok MUSI:
+     - weryfikować sesję
+     - weryfikować rolę
+   - Parametry typu confirmed=true są sygnałem,
+     że akcja jest wykonywana po stronie backendu
