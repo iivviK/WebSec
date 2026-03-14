@@ -1,0 +1,101 @@
+LAB: <lab name>
+Kategoria: <np. Authentication / Access Control / Business Logic>
+Utworzono: YYYY-MM-DD HH:MM (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Co próbuję sprawdzić w tej aplikacji.
+
+   Jaki mechanizm bezpieczeństwa jest testowany.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   Krótki opis środowiska.
+
+   - typ aplikacji
+   - wymagania logowania
+   - istotne endpointy
+   - inne ważne elementy
+
+---
+
+3. OBSERWACJA
+
+   Co zauważyłem podczas pierwszych testów.
+
+   - endpointy
+   - komunikaty błędów
+   - statusy HTTP
+   - różnice w odpowiedziach
+
+   Narzędzia użyte w tym etapie:
+
+   Proxy  
+   Repeater  
+   Intruder  
+   Turbo Intruder
+
+---
+
+4. HIPOTEZA
+
+   Wniosek na podstawie obserwacji.
+
+   Co podejrzewam i dlaczego.
+
+---
+
+5. ANALIZA MECHANIZMU
+
+   Wyjaśnienie jak działa podatność.
+
+   Co dokładnie powoduje problem.
+
+   Jak aplikacja interpretuje request.
+
+---
+
+6. REPRODUCTION / EXPLOIT
+
+   Kroki odtworzenia podatności.
+
+   Step 1  
+   Step 2  
+   Step 3  
+
+   Requesty HTTP jeśli potrzebne.
+
+---
+
+7. IMPACT
+
+   Co może zrobić atakujący.
+
+   Jakie są konsekwencje bezpieczeństwa.
+
+---
+
+8. DEBUGGING / PITFALLS
+
+   Problemy napotkane podczas testów.
+
+   Przykłady:
+
+   - Content-Length mismatch
+   - HTTP formatting
+   - narzędzia (np. Turbo Intruder)
+   - błędne założenia
+
+---
+
+9. MENTAL MODEL / PATTERN
+
+   Wzorzec bezpieczeństwa który warto zapamiętać.
+
+   Jak rozpoznać tę podatność w przyszłości.
+
+   Sygnały ostrzegawcze.
