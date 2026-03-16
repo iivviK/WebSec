@@ -1,0 +1,189 @@
+LAB: Username enumeration via subtly different responses
+Kategoria: Authentication / Username Enumeration
+Utworzono: 2026-03-16 21:12 (Europe/Amsterdam)
+
+---
+
+1. CEL TESTU
+
+   Sprawdzenie czy mechanizm logowania ujawnia informację o istnieniu
+   użytkownika poprzez subtelne różnice w odpowiedziach aplikacji.
+
+   Nawet jeśli komunikat błędu jest identyczny, różnice w strukturze
+   odpowiedzi mogą umożliwić enumerację username.
+
+---
+
+2. KONTEKST APLIKACJI
+
+   - aplikacja webowa z formularzem logowania
+   - endpoint POST /login
+   - parametry w body:
+
+     username
+     password
+
+   komunikat błędu w aplikacji:
+
+   "Invalid username or password"
+
+   na pierwszy rzut oka aplikacja nie ujawnia czy użytkownik istnieje.
+
+---
+
+3. OBSERWACJA
+
+   Podczas testów logowania wszystkie odpowiedzi zawierały
+   identyczny komunikat błędu.
+
+   Jednak analiza odpowiedzi wykazała subtelne różnice
+   w strukturze odpowiedzi.
+
+   Większość odpowiedzi:
+
+   Status: 200  
+   Words: 1903  
+   Length: 3509  
+
+   Jedna odpowiedź:
+
+   Status: 200  
+   Words: 1886  
+   Length: 3488  
+
+   Wniosek:
+
+   backend wykonuje różne ścieżki kodu w zależności
+   od tego czy użytkownik istnieje.
+
+   Narzędzia użyte w tym etapie:
+
+   Proxy – przechwycenie requestu logowania  
+   Turbo Intruder – wykrycie anomalii w odpowiedziach
+
+---
+
+4. HIPOTEZA
+
+   Jeśli backend najpierw sprawdza czy użytkownik istnieje,
+   a następnie weryfikuje hasło, to różnice w przetwarzaniu
+   mogą powodować subtelne różnice w odpowiedzi.
+
+   Analiza tych różnic pozwala wykryć poprawny username.
+
+---
+
+5. ANALIZA MECHANIZMU
+
+   Login endpoint działa jako **authentication oracle**.
+
+   Schemat działania backendu:
+
+   1. sprawdzenie czy użytkownik istnieje
+   2. jeśli nie → zwrócenie błędu logowania
+   3. jeśli tak → weryfikacja hasła
+   4. jeśli hasło błędne → zwrócenie błędu logowania
+
+   Chociaż komunikat błędu jest identyczny,
+   struktura odpowiedzi różni się minimalnie
+   (np. długość HTML lub liczba słów).
+
+   Ta różnica umożliwia enumerację username.
+
+---
+
+6. REPRODUCTION / EXPLOIT
+
+   Step 1 – przechwycenie requestu logowania
+
+   POST /login
+
+   body:
+
+   username=test
+   password=test
+
+---
+
+   Step 2 – enumeracja username
+
+   request użyty w Turbo Intruder:
+
+   username=§username§
+   password=test
+
+   analiza odpowiedzi wykazała anomalię
+   w polach:
+
+   - Words
+   - Length
+
+   jeden z requestów miał inne wartości
+   niż większość odpowiedzi.
+
+   znaleziony użytkownik:
+
+   carlos
+
+---
+
+   Step 3 – brute force hasła
+
+   username=carlos
+   password=§password§
+
+   użyto wordlisty haseł.
+
+---
+
+   Step 4 – identyfikacja sukcesu
+
+   poprawne logowanie rozpoznane po:
+
+   HTTP 302 redirect  
+   Location: /my-account
+
+---
+
+7. IMPACT
+
+   Atakujący może:
+
+   - enumerować istniejących użytkowników
+   - przeprowadzić brute force haseł
+   - przejąć konto użytkownika
+
+   Nawet subtelne różnice w odpowiedzi
+   mogą ujawniać informacje o stanie systemu.
+
+---
+
+8. DEBUGGING / PITFALLS
+
+   Podczas automatyzacji testów należy zwracać uwagę na:
+
+   - subtelne różnice w odpowiedziach (Length / Words)
+   - poprawne formatowanie requestów HTTP
+   - stabilność narzędzi automatyzujących
+
+   Turbo Intruder jest szczególnie przydatny
+   do wykrywania anomalii w odpowiedziach serwera.
+
+---
+
+9. MENTAL MODEL / PATTERN
+
+   Login endpoint może działać jako **authentication oracle**.
+
+   Nawet jeśli komunikat błędu jest identyczny,
+   aplikacja może ujawniać informacje poprzez:
+
+   - długość odpowiedzi
+   - liczbę słów
+   - czas odpowiedzi
+   - status HTTP
+   - redirect
+
+   Pattern do zapamiętania:
+
+   identyczny komunikat logowania ≠ identyczna odpowiedź aplikacji.
