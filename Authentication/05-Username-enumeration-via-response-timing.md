@@ -1,6 +1,6 @@
 LAB: Username enumeration via response timing
 Kategoria: Authentication / Access Control
-Utworzono: 2026-03-19 22:XX (Europe/Amsterdam)
+Utworzono: 2026-03-19 11:29 (Europe/Amsterdam)
 
 ---
 
