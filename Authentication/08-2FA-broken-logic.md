@@ -1,3 +1,4 @@
+```md
 LAB: 2FA broken logic  
 Kategoria: Authentication  
 Utworzono: 2026-03-31 22:55 (Europe/Amsterdam)
@@ -228,3 +229,4 @@ Sygnały ostrzegawcze:
 - możliwość manipulacji po stronie klienta
 
 ---
+```
