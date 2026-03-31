@@ -1,6 +1,6 @@
 LAB: 2FA broken logic  
 Kategoria: Authentication  
-Utworzono: 2026-03-31 22:15 (Europe/Amsterdam)
+Utworzono: 2026-03-31 22:55 (Europe/Amsterdam)
 
 ---
 
@@ -15,19 +15,18 @@ Utworzono: 2026-03-31 22:15 (Europe/Amsterdam)
 
 2. KONTEKST APLIKACJI
 
-   Aplikacja webowa z klasycznym flow logowania:
+   Aplikacja webowa z klasycznym flow logowania.
 
-   - etap 1: username + password
-   - etap 2: kod 2FA (4 cyfry)
-
-   Endpointy:
-   - POST /login
-   - GET /login2
-   - POST /login2
-
-   Cookies:
-   - session → sesja użytkownika
-   - verify → identyfikator użytkownika używany w 2FA
+   - typ aplikacji: web (login form + 2FA)
+   - wymagania logowania:
+     - username + password
+     - kod 2FA (4 cyfry)
+   - endpointy:
+     - POST /login
+     - GET /login2
+     - POST /login2
+   - inne:
+     - aplikacja używa dodatkowego cookie `verify` do obsługi 2FA
 
 ---
 
@@ -45,7 +44,7 @@ Utworzono: 2026-03-31 22:15 (Europe/Amsterdam)
 
    - session ustawiana PRZED ukończeniem 2FA
    - dodatkowe cookie:
-     - verify=<username>
+     - `verify=<username>`
 
 ---
 
@@ -53,7 +52,7 @@ Utworzono: 2026-03-31 22:15 (Europe/Amsterdam)
 
    - formularz:
      - `mfa-code` (4-digit)
-   - brak dodatkowej walidacji kontekstu
+   - brak dodatkowej walidacji kontekstu użytkownika
 
 ---
 
@@ -83,28 +82,26 @@ Utworzono: 2026-03-31 22:15 (Europe/Amsterdam)
 
 5. ANALIZA MECHANIZMU
 
-   Flow backendu:
+   Backend:
 
-   Step 1 – Login:
-   - poprawne dane → tworzy session
-   - ustawia verify=<username>
-
-   Step 2 – GET /login2:
-   - odczytuje cookie `verify`
-   - NIE sprawdza powiązania z session
-
-   Step 3 – POST /login2:
-   - weryfikuje kod dla usera z `verify`
+   - po loginie:
+     - tworzy session
+     - ustawia verify=<username>
+   - podczas GET /login2:
+     - odczytuje `verify`
+     - NIE sprawdza powiązania z session
+   - podczas POST /login2:
+     - weryfikuje kod dla usera z `verify`
 
 ---
 
-   Błąd:
+   Klucz:
 
    - brak spójności między:
      - session (user A)
      - verify (user B)
 
-   ➜ identity desynchronization
+   ➜ możliwa zmiana kontekstu użytkownika w trakcie flow
 
 ---
 
@@ -138,6 +135,9 @@ verify=carlos
 
    Step 3 – Brute force 2FA
 
+   - brak rate limit / lock
+   - przestrzeń: 0000–9999
+
 ```
 POST /login2
 
@@ -149,12 +149,14 @@ mfa-code=0000–9999
 
 ---
 
-   Step 4 – Login jako carlos
+   Step 4 – Login
 
-   - po poprawnym kodzie:
-     - dostęp do /my-account
+```
+username: carlos
+mfa-code: <FOUND>
+```
 
-   ➜ LAB SOLVED
+   ➜ dostęp do konta → LAB SOLVED
 
 ---
 
@@ -163,7 +165,7 @@ mfa-code=0000–9999
 - przejęcie konta dowolnego użytkownika
 - brak konieczności znajomości hasła
 - obejście mechanizmu 2FA
-- możliwość automatycznego brute force kodu
+- możliwość pełnej automatyzacji ataku
 
 ---
 
@@ -172,18 +174,27 @@ mfa-code=0000–9999
 Problemy:
 
 - skupienie się na brute force zamiast analizie logiki
-- brak zwrócenia uwagi na Set-Cookie
-- ignorowanie dodatkowych cookies (`verify`)
-- brak testu manipulacji cookie
+- brak analizy Set-Cookie po loginie
+- ignorowanie dodatkowego cookie `verify`
+- brak testu manipulacji kontekstu użytkownika
+
+---
+
+Narzędzia:
+
+- Proxy  
+- Repeater  
+- Intruder (opcjonalnie)  
+- Python (custom brute-force script)
 
 ---
 
 Rozwiązania:
 
-- analiza wszystkich Set-Cookie po loginie
-- identyfikacja źródeł tożsamości (session vs inne)
+- analiza wszystkich cookie po loginie
+- identyfikacja źródeł tożsamości (session vs verify)
 - test spójności między etapami auth
-- ręczna manipulacja cookie w Repeater
+- manipulacja cookie w Repeater
 
 ---
 
@@ -202,7 +213,7 @@ Jeśli aplikacja:
 
 Klucz:
 
-> “Czy wszystkie etapy auth odnoszą się do tego samego usera?”
+> "Czy wszystkie etapy auth odnoszą się do tego samego usera?"
 
 ---
 
@@ -215,13 +226,5 @@ Sygnały ostrzegawcze:
   - email
 - brak integrity (plain value, brak podpisu)
 - możliwość manipulacji po stronie klienta
-
----
-
-Powiązane patterny:
-
-- IDOR (brak powiązania user ↔ resource)
-- Access Control flaws
-- Business Logic flaws (state machine abuse)
 
 ---
