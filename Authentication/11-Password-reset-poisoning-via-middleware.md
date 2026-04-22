@@ -1,4 +1,4 @@
-```
+```md
 LAB: Password reset poisoning via middleware  
 Kategoria: Authentication / Host Header Injection  
 Utworzono: 2026-04-22 18:05 (Europe/Amsterdam)
