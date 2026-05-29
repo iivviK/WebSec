@@ -267,6 +267,6 @@ Pattern wyjaśnia:
 "Dlaczego to zadziałało?"
 
 Celem systemu nie jest pamiętanie setek labów.
-```
 
 Celem systemu jest rozpoznawanie kilkudziesięciu powtarzalnych wzorców, które pojawiają się w różnych aplikacjach i różnych technologiach.
+```
