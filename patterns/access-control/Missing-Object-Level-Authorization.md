@@ -43,6 +43,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Status 307
 - Status 308
 - Różnica między zachowaniem przeglądarki a surową odpowiedzią HTTP
+- Formularze zawierające dane użytkownika
+- Pola value w formularzach HTML
+- Ukryte pola formularzy
+- Dane wrażliwe renderowane w odpowiedzi
+- Profile użytkowników zawierające sekcje administracyjne
 
 ==================================================
 4. PREREQUISITES
@@ -68,6 +73,10 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Czy backend generuje dane przed redirectem?
 - Czy redirect faktycznie blokuje dostęp?
 - Co znajduje się w surowej odpowiedzi HTTP?
+- Jakie dane zawiera obiekt po uzyskaniu dostępu?
+- Czy formularze ujawniają dodatkowe informacje?
+- Czy odpowiedź zawiera dane wrażliwe niewidoczne na pierwszy rzut oka?
+- Czy dostęp do obiektu prowadzi do dalszej eskalacji?
 
 ==================================================
 6. DETECTION
@@ -86,6 +95,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Analiza odpowiedzi w Burp Repeater
 - Wyłączenie automatycznego follow redirect
 - Porównanie odpowiedzi przeglądarki i proxy
+- Analiza pełnego HTML odpowiedzi
+- Analiza atrybutów value
+- Analiza hidden fields
+- Analiza formularzy zarządzania kontem
+- Analiza wszystkich danych zwracanych dla obiektu
 
 ==================================================
 7. GENERALIZATION
@@ -109,6 +123,12 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Soft blocking mechanizmy
 - Aplikacje generujące odpowiedź przed autoryzacją
 - Middleware wykonujące redirect po wygenerowaniu danych
+- Profile użytkowników
+- Formularze zarządzania kontem
+- Panele administracyjne
+- Dane uwierzytelniające
+- Dane osobowe
+- Dane API
 
 ==================================================
 8. WHY IT WORKS
@@ -125,4 +145,5 @@ W rezultacie użytkownik może uzyskać dostęp do obiektów należących do inn
 - PortSwigger: User ID controlled by request parameter
 - PortSwigger: User ID controlled by request parameter, with unpredictable user IDs
 - PortSwigger: User ID controlled by request parameter with data leakage in redirect
+- PortSwigger: User ID controlled by request parameter with password disclosure
 ```
