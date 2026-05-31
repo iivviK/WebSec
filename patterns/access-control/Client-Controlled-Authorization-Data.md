@@ -29,6 +29,12 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Uprawnienia widoczne w cookie
 - Uprawnienia widoczne w parametrach requestu
 - Uprawnienia widoczne w nagłówkach HTTP
+- roleId
+- userRoleId
+- groupId
+- permissionId
+- Pola związane z uprawnieniami ujawnione w JSON response
+- Pełne obiekty użytkownika zwracane przez API
 
 ==================================================
 4. PREREQUISITES
@@ -46,6 +52,10 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Czy użytkownik może zmienić dane autoryzacyjne?
 - Czy zmiana tych danych wpływa na dostęp?
 - Czy backend posiada własne źródło informacji o roli?
+- Czy response ujawnia pola związane z uprawnieniami?
+- Czy mogę dopisać dodatkowe pola do requestu?
+- Czy backend stosuje allowlistę pól?
+- Czy mogę modyfikować atrybuty niewidoczne w UI?
 
 ==================================================
 6. DETECTION
@@ -55,6 +65,10 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Zmodyfikuj wartości sugerujące rolę lub poziom dostępu
 - Porównaj zachowanie aplikacji przed i po zmianie
 - Zweryfikuj dostęp do funkcji uprzywilejowanych
+- Analiza pełnych obiektów JSON
+- Próba dodania niewidocznych pól do requestu
+- Porównanie modelu danych z formularzem UI
+- Testowanie over-postingu / mass assignment
 
 ==================================================
 7. GENERALIZATION
@@ -66,6 +80,11 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Poziomy dostępu
 - Uprawnienia administracyjne
 - Mechanizmy autoryzacji oparte o atrybuty
+- API REST
+- Aktualizacja profilu użytkownika
+- Operacje PATCH / PUT
+- Frameworki automatycznie mapujące obiekty
+- Mechanizmy ORM
 
 ==================================================
 8. WHY IT WORKS
@@ -80,4 +99,5 @@ Ponieważ użytkownik kontroluje te dane, może wpłynąć na decyzję autoryzac
 ==================================================
 
 - PortSwigger: User role controlled by request parameter
+- PortSwigger: User role can be modified in user profile
 ```
