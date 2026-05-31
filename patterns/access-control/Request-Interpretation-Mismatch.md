@@ -30,6 +30,12 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 - X-Rewrite-URL
 - X-Forwarded-Path
 - X-Forwarded-Prefix
+- Zachowanie zależne od metody HTTP
+- POST = 401
+- GET = 200/302
+- Różne komunikaty błędów dla różnych metod
+- Nietypowe reakcje na POSTX
+- Endpointy administracyjne obsługujące wiele metod
 
 ==================================================
 4. PREREQUISITES
@@ -48,6 +54,10 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 - Czy istnieją nagłówki nadpisujące routing?
 - Czy backend ufa dodatkowym nagłówkom?
 - Czy różne komponenty interpretują request identycznie?
+- Czy ACL działa identycznie dla wszystkich metod?
+- Czy GET i POST trafiają do tej samej logiki?
+- Czy PUT, DELETE, PATCH są chronione?
+- Czy różne metody przechodzą przez różne middleware?
 
 ==================================================
 6. DETECTION
@@ -59,6 +69,12 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 - Testowanie X-Forwarded-Prefix
 - Porównywanie zachowania proxy i backendu
 - Analiza różnic między 403 a 404
+- Zamień POST na GET
+- Zamień POST na PUT
+- Zamień POST na DELETE
+- Zamień POST na PATCH
+- Wyślij niepoprawną metodę (POSTX)
+- Porównuj odpowiedzi między metodami
 
 ==================================================
 7. GENERALIZATION
@@ -71,6 +87,12 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 - CDN
 - Middleware routing
 - Mikroserwisy
+- Method-based Access Control
+- REST API
+- Reverse Proxy Routing
+- Middleware ACL
+- Framework Routing
+- API Gateways
 
 ==================================================
 8. WHY IT WORKS
@@ -85,4 +107,5 @@ W rezultacie mechanizm bezpieczeństwa zatwierdza request, który backend interp
 ==================================================
 
 - PortSwigger: URL-based access control can be circumvented
+- PortSwigger: Method based access control can be circumvented
 ```
