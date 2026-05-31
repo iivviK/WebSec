@@ -35,6 +35,13 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - permissionId
 - Pola związane z uprawnieniami ujawnione w JSON response
 - Pełne obiekty użytkownika zwracane przez API
+- Referer
+- Origin
+- X-User
+- X-Role
+- X-Admin
+- X-Forwarded-User
+- X-Authenticated-User
 
 ==================================================
 4. PREREQUISITES
@@ -56,6 +63,10 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Czy mogę dopisać dodatkowe pola do requestu?
 - Czy backend stosuje allowlistę pól?
 - Czy mogę modyfikować atrybuty niewidoczne w UI?
+- Czy decyzja autoryzacyjna zależy od nagłówków?
+- Czy backend ufa Referer?
+- Czy backend ufa Origin?
+- Czy użytkownik może wpływać na dane używane podczas autoryzacji?
 
 ==================================================
 6. DETECTION
@@ -69,6 +80,11 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Próba dodania niewidocznych pól do requestu
 - Porównanie modelu danych z formularzem UI
 - Testowanie over-postingu / mass assignment
+- Modyfikacja Referer
+- Usunięcie Referer
+- Modyfikacja Origin
+- Dodawanie własnych nagłówków
+- Porównanie zachowania dla różnych wartości nagłówków
 
 ==================================================
 7. GENERALIZATION
@@ -85,6 +101,12 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Operacje PATCH / PUT
 - Frameworki automatycznie mapujące obiekty
 - Mechanizmy ORM
+- Cookies
+- Query Parameters
+- Hidden Fields
+- HTTP Headers
+- JWT Claims
+- Client-side Storage
 
 ==================================================
 8. WHY IT WORKS
@@ -100,4 +122,5 @@ Ponieważ użytkownik kontroluje te dane, może wpłynąć na decyzję autoryzac
 
 - PortSwigger: User role controlled by request parameter
 - PortSwigger: User role can be modified in user profile
+- PortSwigger: Referer-based access control
 ```
