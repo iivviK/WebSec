@@ -37,11 +37,7 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Pełne obiekty użytkownika zwracane przez API
 - Referer
 - Origin
-- X-User
-- X-Role
-- X-Admin
-- X-Forwarded-User
-- X-Authenticated-User
+- Nagłówki sugerujące tożsamość lub rolę użytkownika
 
 ==================================================
 4. PREREQUISITES
@@ -96,11 +92,6 @@ Backend ufa danym autoryzacyjnym pochodzącym od klienta zamiast korzystać z w�
 - Poziomy dostępu
 - Uprawnienia administracyjne
 - Mechanizmy autoryzacji oparte o atrybuty
-- API REST
-- Aktualizacja profilu użytkownika
-- Operacje PATCH / PUT
-- Frameworki automatycznie mapujące obiekty
-- Mechanizmy ORM
 - Cookies
 - Query Parameters
 - Hidden Fields
