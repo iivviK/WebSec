@@ -48,6 +48,13 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Ukryte pola formularzy
 - Dane wrażliwe renderowane w odpowiedzi
 - Profile użytkowników zawierające sekcje administracyjne
+- Nazwy plików w URL
+- Content-Disposition
+- filename=
+- Numerowane pliki
+- Przewidywalne nazwy plików
+- Referencje do dokumentów
+- Referencje do załączników
 
 ==================================================
 4. PREREQUISITES
@@ -77,6 +84,10 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Czy formularze ujawniają dodatkowe informacje?
 - Czy odpowiedź zawiera dane wrażliwe niewidoczne na pierwszy rzut oka?
 - Czy dostęp do obiektu prowadzi do dalszej eskalacji?
+- Czy plik jest obiektem chronionym?
+- Czy mogę podmienić nazwę pliku?
+- Czy backend sprawdza właściciela pliku?
+- Czy nazwa pliku pełni rolę identyfikatora obiektu?
 
 ==================================================
 6. DETECTION
@@ -100,6 +111,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Analiza hidden fields
 - Analiza formularzy zarządzania kontem
 - Analiza wszystkich danych zwracanych dla obiektu
+- Analiza Content-Disposition
+- Analiza filename=
+- Manipulacja nazwami plików
+- Testowanie sekwencyjnych nazw plików
+- Testowanie referencji do dokumentów i załączników
 
 ==================================================
 7. GENERALIZATION
@@ -129,6 +145,13 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Dane uwierzytelniające
 - Dane osobowe
 - Dane API
+- Dokumenty
+- Załączniki
+- Eksporty danych
+- Raporty PDF
+- Transkrypcje
+- Archiwa
+- Obiekty przechowywane jako pliki
 
 ==================================================
 8. WHY IT WORKS
@@ -146,4 +169,5 @@ W rezultacie użytkownik może uzyskać dostęp do obiektów należących do inn
 - PortSwigger: User ID controlled by request parameter, with unpredictable user IDs
 - PortSwigger: User ID controlled by request parameter with data leakage in redirect
 - PortSwigger: User ID controlled by request parameter with password disclosure
+- PortSwigger: Insecure Direct Object References
 ```
