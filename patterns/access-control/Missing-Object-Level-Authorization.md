@@ -31,6 +31,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - file=
 - Numerowane identyfikatory w URL
 - Identyfikatory obiektów w parametrach requestu
+- UUID w URL
+- GUID w URL
+- Losowe identyfikatory obiektów
+- Nieprzewidywalne identyfikatory użytkowników
+- Publiczne profile ujawniające identyfikatory
 
 ==================================================
 4. PREREQUISITES
@@ -48,6 +53,10 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Czy otrzymam dane innego użytkownika?
 - Czy backend sprawdza właściciela obiektu?
 - Czy dostęp zależy wyłącznie od przekazanego identyfikatora?
+- Czy aplikacja gdziekolwiek ujawnia UUID?
+- Czy identyfikator obiektu można pozyskać z innych funkcji?
+- Czy losowy identyfikator jest jedynym zabezpieczeniem?
+- Czy obiekt pozostaje dostępny po zdobyciu poprawnego identyfikatora?
 
 ==================================================
 6. DETECTION
@@ -57,6 +66,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Podmień identyfikator na inny
 - Porównaj odpowiedzi aplikacji
 - Zweryfikuj dostęp do obiektów innych użytkowników
+- Szukaj miejsc ujawniających identyfikatory obiektów
+- Analizuj profile użytkowników
+- Analizuj linki autorów
+- Analizuj API responses
+- Analizuj referencje między obiektami
 
 ==================================================
 7. GENERALIZATION
@@ -70,6 +84,12 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Dane klientów
 - Zasoby API
 - Pliki
+- UUID
+- GUID
+- Hash-based identifiers
+- Public profile references
+- Relacje między użytkownikami
+- Obiekty ujawniane przez funkcje społecznościowe
 
 ==================================================
 8. WHY IT WORKS
@@ -84,4 +104,5 @@ W rezultacie użytkownik może uzyskać dostęp do obiektów należących do inn
 ==================================================
 
 - PortSwigger: User ID controlled by request parameter
+- PortSwigger: User ID controlled by request parameter, with unpredictable user IDs
 ```
