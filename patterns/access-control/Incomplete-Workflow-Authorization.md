@@ -21,15 +21,13 @@ Aplikacja zakłada, że wcześniejsze kroki procesu zostały wykonane poprawnie 
 3. SIGNALS
 ==================================================
 
-- confirmed=true
-- finalize=true
-- execute=true
-- complete=true
-- approve=true
 - Wieloetapowe procesy
 - Ekrany potwierdzenia
 - Kreatory (wizard)
 - Workflow administracyjne
+- Oddzielne kroki przygotowania i wykonania akcji
+- Końcowe requesty realizujące rzeczywistą operację
+- Procesy wymagające zatwierdzenia lub akceptacji
 
 ==================================================
 4. PREREQUISITES
@@ -54,21 +52,23 @@ Aplikacja zakłada, że wcześniejsze kroki procesu zostały wykonane poprawnie 
 
 - Zmapuj cały workflow
 - Zidentyfikuj request wykonujący finalną akcję
-- Wywołaj go bez przechodzenia wcześniejszych etapów
-- Testuj parametry typu confirmed=true
-- Testuj kroki approve/finalize/execute
+- Wywołaj końcowy etap bez przechodzenia wcześniejszych kroków
+- Testuj możliwość pomijania etapów procesu
+- Zweryfikuj autoryzację dla każdego kroku osobno
 
 ==================================================
 7. GENERALIZATION
 ==================================================
 
-- Password Reset
-- Checkout
-- Approval Workflows
-- Role Management
-- Account Management
-- Financial Transactions
-- Administrative Actions
+- Procesy rejestracji
+- Reset hasła
+- Zakupy i checkout
+- Workflow zatwierdzeń
+- Zarządzanie rolami
+- Zarządzanie kontami
+- Operacje finansowe
+- Operacje administracyjne
+- Procesy wymagające potwierdzenia
 
 ==================================================
 8. WHY IT WORKS
