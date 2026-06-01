@@ -21,40 +21,17 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 3. SIGNALS
 ==================================================
 
-- id=
-- user=
-- account=
-- profile=
-- document=
-- invoice=
-- order=
-- file=
-- Numerowane identyfikatory w URL
+- Identyfikatory obiektów w URL
 - Identyfikatory obiektów w parametrach requestu
-- UUID w URL
-- GUID w URL
+- UUID / GUID
 - Losowe identyfikatory obiektów
-- Nieprzewidywalne identyfikatory użytkowników
-- Publiczne profile ujawniające identyfikatory
-- Redirect po próbie dostępu do obcego zasobu
-- Status 301
-- Status 302
-- Status 303
-- Status 307
-- Status 308
-- Różnica między zachowaniem przeglądarki a surową odpowiedzią HTTP
-- Formularze zawierające dane użytkownika
-- Pola value w formularzach HTML
-- Ukryte pola formularzy
-- Dane wrażliwe renderowane w odpowiedzi
-- Profile użytkowników zawierające sekcje administracyjne
-- Nazwy plików w URL
+- Publiczne referencje do obiektów
+- Linki do profili użytkowników
+- Linki do dokumentów i plików
+- Redirect po próbie dostępu do obiektu
+- Dane użytkownika zwracane po zmianie identyfikatora
 - Content-Disposition
 - filename=
-- Numerowane pliki
-- Przewidywalne nazwy plików
-- Referencje do dokumentów
-- Referencje do załączników
 
 ==================================================
 4. PREREQUISITES
@@ -69,53 +46,28 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 ==================================================
 
 - Czy mogę zmienić identyfikator obiektu?
-- Czy otrzymam dane innego użytkownika?
 - Czy backend sprawdza właściciela obiektu?
 - Czy dostęp zależy wyłącznie od przekazanego identyfikatora?
-- Czy aplikacja gdziekolwiek ujawnia UUID?
-- Czy identyfikator obiektu można pozyskać z innych funkcji?
+- Czy aplikacja ujawnia identyfikatory innych obiektów?
 - Czy losowy identyfikator jest jedynym zabezpieczeniem?
-- Czy obiekt pozostaje dostępny po zdobyciu poprawnego identyfikatora?
-- Czy body odpowiedzi 3xx zawiera dane?
-- Czy backend generuje dane przed redirectem?
-- Czy redirect faktycznie blokuje dostęp?
-- Co znajduje się w surowej odpowiedzi HTTP?
-- Jakie dane zawiera obiekt po uzyskaniu dostępu?
-- Czy formularze ujawniają dodatkowe informacje?
-- Czy odpowiedź zawiera dane wrażliwe niewidoczne na pierwszy rzut oka?
+- Czy body odpowiedzi zawiera dane mimo blokady dostępu?
 - Czy dostęp do obiektu prowadzi do dalszej eskalacji?
-- Czy plik jest obiektem chronionym?
-- Czy mogę podmienić nazwę pliku?
-- Czy backend sprawdza właściciela pliku?
-- Czy nazwa pliku pełni rolę identyfikatora obiektu?
+- Czy plik lub dokument jest traktowany jako obiekt chroniony?
 
 ==================================================
 6. DETECTION
 ==================================================
 
-- Zidentyfikuj parametry wskazujące obiekt
+- Zidentyfikuj parametr wskazujący obiekt
 - Podmień identyfikator na inny
 - Porównaj odpowiedzi aplikacji
 - Zweryfikuj dostęp do obiektów innych użytkowników
-- Szukaj miejsc ujawniających identyfikatory obiektów
-- Analizuj profile użytkowników
-- Analizuj linki autorów
-- Analizuj API responses
-- Analizuj referencje między obiektami
-- Analiza body odpowiedzi 3xx
-- Analiza odpowiedzi w Burp Repeater
-- Wyłączenie automatycznego follow redirect
-- Porównanie odpowiedzi przeglądarki i proxy
-- Analiza pełnego HTML odpowiedzi
-- Analiza atrybutów value
-- Analiza hidden fields
-- Analiza formularzy zarządzania kontem
-- Analiza wszystkich danych zwracanych dla obiektu
-- Analiza Content-Disposition
-- Analiza filename=
-- Manipulacja nazwami plików
-- Testowanie sekwencyjnych nazw plików
-- Testowanie referencji do dokumentów i załączników
+- Szukaj miejsc ujawniających identyfikatory
+- Analizuj profile, linki i relacje między obiektami
+- Analizuj pełną odpowiedź HTTP
+- Wyłącz automatyczne follow redirect
+- Analizuj dane zwracane dla obiektu
+- Testuj dostęp do plików, dokumentów i załączników
 
 ==================================================
 7. GENERALIZATION
@@ -128,30 +80,11 @@ Backend identyfikuje obiekt na podstawie danych dostarczonych przez klienta, ale
 - Klucze API
 - Dane klientów
 - Zasoby API
-- Pliki
-- UUID
-- GUID
-- Hash-based identifiers
-- Public profile references
+- Pliki i załączniki
+- Raporty i eksporty danych
+- Obiekty identyfikowane przez UUID / GUID
 - Relacje między użytkownikami
-- Obiekty ujawniane przez funkcje społecznościowe
-- Redirect-based access control
-- Soft blocking mechanizmy
-- Aplikacje generujące odpowiedź przed autoryzacją
-- Middleware wykonujące redirect po wygenerowaniu danych
-- Profile użytkowników
-- Formularze zarządzania kontem
-- Panele administracyjne
-- Dane uwierzytelniające
-- Dane osobowe
-- Dane API
-- Dokumenty
-- Załączniki
-- Eksporty danych
-- Raporty PDF
-- Transkrypcje
-- Archiwa
-- Obiekty przechowywane jako pliki
+- Funkcje społecznościowe
 
 ==================================================
 8. WHY IT WORKS
