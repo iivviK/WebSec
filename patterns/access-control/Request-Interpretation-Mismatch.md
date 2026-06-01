@@ -23,26 +23,22 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 
 - Reverse proxy przed aplikacją
 - WAF przed aplikacją
+- API Gateway przed backendem
 - Nietypowe odpowiedzi 403
 - Bardzo krótkie odpowiedzi Access Denied
-- Nagłówki wpływające na routing
-- X-Original-URL
-- X-Rewrite-URL
-- X-Forwarded-Path
-- X-Forwarded-Prefix
+- Różnice pomiędzy zachowaniem frontendu i backendu
 - Zachowanie zależne od metody HTTP
-- POST = 401
-- GET = 200/302
-- Różne komunikaty błędów dla różnych metod
-- Nietypowe reakcje na POSTX
-- Endpointy administracyjne obsługujące wiele metod
+- Różne odpowiedzi dla tego samego zasobu
+- Różne komunikaty błędów dla podobnych requestów
+- Nagłówki wpływające na routing lub autoryzację
+- Endpointy administracyjne dostępne przez wiele ścieżek
 
 ==================================================
 4. PREREQUISITES
 ==================================================
 
 - Co najmniej dwa komponenty analizujące request
-- Różne źródła informacji o ścieżce
+- Różne źródła informacji o ścieżce lub metodzie
 - Możliwość wpływu na dane interpretowane przez backend
 
 ==================================================
@@ -50,49 +46,43 @@ Brak spójności pomiędzy komponentami odpowiedzialnymi za routing, autoryzacj�
 ==================================================
 
 - Kto podejmuje decyzję o dostępie?
-- Czy front-end i backend widzą ten sam URL?
-- Czy istnieją nagłówki nadpisujące routing?
+- Czy front-end i backend widzą ten sam request?
+- Czy istnieją alternatywne źródła informacji o ścieżce?
 - Czy backend ufa dodatkowym nagłówkom?
 - Czy różne komponenty interpretują request identycznie?
-- Czy ACL działa identycznie dla wszystkich metod?
-- Czy GET i POST trafiają do tej samej logiki?
-- Czy PUT, DELETE, PATCH są chronione?
-- Czy różne metody przechodzą przez różne middleware?
+- Czy ACL działa identycznie dla wszystkich metod HTTP?
+- Czy różne metody trafiają do tej samej logiki?
+- Czy różne ścieżki przetwarzania mają te same kontrole bezpieczeństwa?
+- Czy różne middleware podejmują różne decyzje?
 
 ==================================================
 6. DETECTION
 ==================================================
 
-- Testowanie X-Original-URL
-- Testowanie X-Rewrite-URL
-- Testowanie X-Forwarded-Path
-- Testowanie X-Forwarded-Prefix
-- Porównywanie zachowania proxy i backendu
-- Analiza różnic między 403 a 404
-- Zamień POST na GET
-- Zamień POST na PUT
-- Zamień POST na DELETE
-- Zamień POST na PATCH
-- Wyślij niepoprawną metodę (POSTX)
-- Porównuj odpowiedzi między metodami
+- Testowanie alternatywnych źródeł informacji o ścieżce
+- Testowanie nagłówków wpływających na routing
+- Porównywanie interpretacji requestu przez różne komponenty
+- Analiza różnic między odpowiedziami 403, 404 i 200
+- Testowanie różnych metod HTTP
+- Testowanie nieoczekiwanych metod HTTP
+- Porównywanie zachowania aplikacji dla różnych metod
+- Analiza różnic w autoryzacji pomiędzy metodami
+- Identyfikacja punktów decyzyjnych ACL
 
 ==================================================
 7. GENERALIZATION
 ==================================================
 
 - Reverse Proxy
-- Load Balancery
+- Load Balancers
 - API Gateways
 - WAF
 - CDN
-- Middleware routing
+- Middleware
+- Routing Frameworks
 - Mikroserwisy
-- Method-based Access Control
-- REST API
-- Reverse Proxy Routing
-- Middleware ACL
-- Framework Routing
-- API Gateways
+- Architektury wielowarstwowe
+- Systemy wykorzystujące wiele komponentów do obsługi requestu
 
 ==================================================
 8. WHY IT WORKS
