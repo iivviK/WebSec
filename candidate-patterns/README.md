@@ -74,3 +74,6 @@ Dopiero po potwierdzeniu wzorzec trafia do:
 ```text
 patterns/
 ```
+
+```
+```
