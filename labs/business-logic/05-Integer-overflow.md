@@ -1,7 +1,7 @@
 ```md
 LAB: Integer overflow
 Kategoria: Business Logic
-Utworzono: 2026-06-03 17:xx (Europe/Amsterdam)
+Utworzono: 2026-06-03 17:57 (Europe/Amsterdam)
 
 ---
 
