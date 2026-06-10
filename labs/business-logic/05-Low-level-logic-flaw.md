@@ -1,5 +1,5 @@
 ```md
-LAB: Integer overflow
+LAB: Low-level logic flaw
 Kategoria: Business Logic
 Utworzono: 2026-06-03 17:57 (Europe/Amsterdam)
 
