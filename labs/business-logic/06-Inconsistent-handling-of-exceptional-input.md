@@ -1,7 +1,7 @@
 ```md
 LAB: Inconsistent handling of exceptional input
 Kategoria: Business Logic
-Utworzono: 2026-06-10 13:00 (Europe/Amsterdam)
+Utworzono: 2026-06-10 11:26 (Europe/Amsterdam)
 
 ---
 
