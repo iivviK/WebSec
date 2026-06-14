@@ -1,34 +1,63 @@
 ```md
 LAB: Authentication bypass via flawed state machine
 Kategoria: Authentication / State Machine
-Utworzono: 14-06-2026 14:41 Europe/Amsterdam
+Utworzono: 2026-06-14 21:00 (Europe/Amsterdam)
 
-# 1. CEL TESTU
+---
 
-Uzyskać dostęp do panelu administratora poprzez analizę procesu logowania i identyfikację błędów w obsłudze stanów uwierzytelniania.
+1. SCAN (Entry & Signals)
 
-# 2. KONTEKST APLIKACJI
+Endpointy:
 
-Aplikacja wykorzystuje wieloetapowy proces logowania:
+* POST /login
+* GET /role-selector
+* POST /role-selector
+* GET /admin
+
+Obiekty biznesowe:
+
+* User Session
+* Authentication State
+* User Role
+* Authentication Workflow
+
+Sygnały:
+
+* logowanie składa się z wielu etapów
+* po poprawnym loginie następuje redirect do dodatkowego kroku
+* nowa sesja tworzona jest przed zakończeniem całego procesu
+* użytkownik musi wybrać rolę przed wejściem do aplikacji
+* istnieje panel administracyjny dostępny pod osobnym endpointem
+* workflow opiera się na przejściach pomiędzy kolejnymi stanami
+
+---
+
+2. KONTEKST APLIKACJI
+
+Aplikacja wykorzystuje wieloetapowy proces uwierzytelniania.
+
+Normalny proces:
 
 1. Użytkownik podaje login i hasło.
-2. Backend tworzy nową sesję.
-3. Użytkownik zostaje przekierowany do `/role-selector`.
-4. Następuje wybór roli.
-5. Użytkownik trafia do aplikacji.
+2. Backend weryfikuje credentiale.
+3. Tworzona jest sesja.
+4. Użytkownik zostaje przekierowany do wyboru roli.
+5. Rola zostaje przypisana.
+6. Użytkownik trafia do aplikacji.
 
 Dostępne role:
 
 * user
 * content-author
 
-W aplikacji istnieje również endpoint administracyjny:
+Założenie bezpieczeństwa:
 
-```text
-/admin
-```
+* użytkownik powinien uzyskać dostęp dopiero po ukończeniu całego workflow
+* przypisanie roli powinno nastąpić przed przyznaniem uprawnień
 
-# 3. OBSERWACJA
+---
+
+3. OBSERWACJA
 
 Po poprawnym logowaniu:
 
@@ -44,25 +73,37 @@ Location: /role-selector
 Set-Cookie: session=...
 ```
 
-Oznacza to, że sesja zostaje utworzona przed zakończeniem całego workflow.
+Oznacza to, że sesja zostaje utworzona jeszcze przed ukończeniem procesu wyboru roli.
 
-Próba bezpośredniego wejścia na:
+Próba wejścia na:
 
 ```text
 /admin
 ```
 
-z poziomu strony wyboru roli nie daje dostępu administracyjnego.
+bezpośrednio z poziomu strony wyboru roli nie daje dostępu administracyjnego.
 
-# 4. HIPOTEZA
+Istotnym elementem workflow jest request:
 
-Backend może niepoprawnie obsługiwać sytuację, w której wymagany etap workflow nie zostanie wykonany.
+```http
+GET /role-selector
+```
 
-Pominięcie kroku wyboru roli może pozostawić użytkownika w nieobsłużonym stanie skutkującym błędnym przypisaniem uprawnień.
+wykonywany bezpośrednio po logowaniu.
 
-# 5. ANALIZA MECHANIZMU
+---
 
-Normalny workflow:
+4. HIPOTEZA
+
+Aplikacja może niepoprawnie obsługiwać sytuację, w której wymagany etap workflow nie zostanie wykonany.
+
+Pominięcie kroku odpowiedzialnego za wybór roli może pozostawić użytkownika w stanie nieobsłużonym przez logikę backendu.
+
+---
+
+5. ANALIZA MECHANIZMU
+
+Normalny przepływ:
 
 ```text
 Anonymous
@@ -73,12 +114,12 @@ Session Created
     ↓
 GET /role-selector
     ↓
-Role Assigned
+Role Assignment
     ↓
 Application Access
 ```
 
-Workflow wykorzystany podczas ataku:
+Zaobserwowany przepływ:
 
 ```text
 Anonymous
@@ -96,123 +137,162 @@ Administrator Role
 /admin
 ```
 
-Backend zakłada, że krok wyboru roli zostanie wykonany.
+Kluczowa obserwacja:
 
-Po jego pominięciu użytkownik trafia do stanu nieobsłużonego przez logikę aplikacji.
-
-# 6. REPRODUCTION / EXPLOIT
-
-1. Zalogować się jako:
-
-```text
-wiener:peter
-```
-
-2. Włączyć Intercept w Burp Suite.
-
-3. Wysłać:
-
-```http
-POST /login
-```
-
-4. Przepuścić request logowania.
-
-5. Przechwycić:
-
-```http
-GET /role-selector
-```
-
-6. Odrzucić request (`Drop`).
-
-7. Przejść na stronę główną aplikacji.
-
-8. Otworzyć:
-
-```text
-/admin
-```
-
-9. Uzyskać dostęp do panelu administratora.
-
-10. Usunąć użytkownika:
-
-```text
-carlos
-```
-
-# 7. IMPACT
-
-Nieautoryzowany użytkownik może uzyskać uprawnienia administratora.
-
-Możliwe skutki:
-
-* przejęcie funkcji administracyjnych
-* usuwanie użytkowników
-* modyfikacja danych
-* pełna kompromitacja aplikacji
-
-# 8. DEBUGGING / PITFALLS
-
-* Skupienie się na parametrze:
+Problem nie wynika z manipulacji parametrem:
 
 ```text
 role=admin
 ```
 
-prowadzi na fałszywy trop.
+Problem wynika z pominięcia wymaganego przejścia w workflow.
 
-* Istotny był nie parametr roli, lecz stan workflow.
+Backend zakłada, że etap wyboru roli zawsze zostanie wykonany.
 
-* Samo wejście na:
+Po jego pominięciu użytkownik trafia do nieobsłużonego stanu skutkującego przypisaniem uprawnień administratora.
+
+Powstaje rozjazd pomiędzy:
+
+* założonym workflow,
+* rzeczywistym stanem aplikacji.
+
+---
+
+6. REPRODUCTION / EXPLOIT
+
+6.1. Zaloguj się jako:
 
 ```text
-/admin
+wiener:peter
 ```
 
-z poziomu strony wyboru roli nie działa.
+6.2. Włącz Intercept w Burp Suite.
 
-* Kluczowe jest całkowite pominięcie requestu:
+6.3. Wyślij:
+
+```http
+POST /login
+```
+
+6.4. Przepuść request logowania.
+
+6.5. Przechwyć:
 
 ```http
 GET /role-selector
 ```
 
-* Należy analizować moment utworzenia sesji oraz przejścia pomiędzy stanami.
+6.6. Odrzuć request (`Drop`).
 
-# 9. MENTAL MODEL / PATTERN
+6.7. Przejdź na stronę główną aplikacji.
 
-Nazwa robocza:
+6.8. Otwórz:
 
 ```text
+/admin
+```
+
+6.9. Zaobserwuj dostęp do panelu administratora.
+
+6.10. Usuń użytkownika:
+
+```text
+carlos
+```
+
+6.11. Potwierdź rozwiązanie laboratorium.
+
+---
+
+7. IMPACT
+
+Atakujący może:
+
+* uzyskać uprawnienia administratora
+* omijać wymagane etapy uwierzytelniania
+* wykonywać operacje administracyjne
+* przejmować funkcje zarządzania aplikacją
+* doprowadzić do pełnej kompromitacji systemu
+
+---
+
+8. DEBUGGING / PITFALLS
+
+Główna pułapka:
+
+Skupienie się na parametrze:
+
+```text
+role=admin
+```
+
+Błędny kierunek:
+
+* parameter tampering
+* manipulacja rolą
+* brute force wartości role
+
+Właściwy kierunek:
+
+* mapowanie pełnego workflow logowania
+* analiza redirectów
+* identyfikacja stanów pośrednich
+* testowanie zachowania po pominięciu poszczególnych kroków
+
+Szczególnie istotne:
+
+* moment utworzenia sesji
+* dodatkowe kroki po logowaniu
+* przejścia pomiędzy stanami
+* przypadki niepełnego workflow
+
+---
+
+9. MENTAL MODEL / PATTERN
+
+Pattern Candidate:
+
 Workflow Default-State Privilege Escalation
+
+Core Idea:
+
+Aplikacja zakłada wykonanie wszystkich kroków workflow.
+
+Pominięcie wymaganego etapu pozostawia użytkownika w nieobsłużonym stanie skutkującym nadaniem nadmiernych uprawnień.
+
+Pytania przewodnie:
+
+* Czy workflow zawiera obowiązkowe kroki po logowaniu?
+* Kiedy tworzona jest sesja?
+* Co stanie się po pominięciu danego etapu?
+* Jak aplikacja zachowuje się przy niepełnym stanie użytkownika?
+* Czy istnieją niebezpieczne wartości domyślne?
+
+Typowe miejsca występowania:
+
+* MFA
+* role selection
+* account activation
+* onboarding
+* email verification
+* password reset workflows
+
+---
+
+10. WHY IT WORKS
+
+Backend tworzy sesję jeszcze przed zakończeniem procesu przypisywania roli.
+
+Aplikacja zakłada, że użytkownik zawsze przejdzie przez etap:
+
+```http
+GET /role-selector
 ```
 
-Wzorzec:
+Założenie to nie jest jednak egzekwowane.
 
-```text
-Workflow
-    ↓
-Required Step
-    ↓
-Step Skipped
-    ↓
-Uninitialized State
-    ↓
-Unsafe Default
-    ↓
-Privilege Escalation
-```
+Po pominięciu wymaganego kroku użytkownik trafia do nieobsłużonego stanu workflow, który skutkuje przypisaniem uprawnień administratora.
 
-Pytanie kontrolne:
-
-```text
-Co stanie się, jeśli wymagany krok workflow nie zostanie wykonany?
-```
-
-WHY IT WORKS:
-
-Aplikacja nie wymusza ukończenia pełnego workflow i po pominięciu wymaganego etapu pozostawia użytkownika w stanie skutkującym nadmiernymi uprawnieniami.
+W efekcie możliwe jest uzyskanie dostępu do panelu administracyjnego bez ukończenia przewidzianego procesu uwierzytelniania.
 
 ```
